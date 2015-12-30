@@ -1,0 +1,22 @@
+{% for service in data.services %}
+upstream {{ service.name }} {
+  least_conn;
+
+  {% for task in service.tasks %}
+    server {{ task.ip }}:{{ task.port }} max_fails=3 fail_timeout=60 weight=1;
+  {% endfor %}
+}
+{% endfor %}
+
+server {
+  listen 80 default_server;
+
+  {% for service in data.services %}
+    location /{{ service.name }} {
+      proxy_pass http://{{ service.name }};
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header Host $host;
+      proxy_set_header X-Real-IP $remote_addr;
+    }
+  {% endfor %}
+}
