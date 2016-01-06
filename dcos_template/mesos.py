@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import itertools
 import requests
 
 from . import log
@@ -21,6 +22,20 @@ from . import log
 
 # XXX - Make this configurable
 TIMEOUT = 5
+
+# {
+#     "services": [
+#         {
+#             "name": "derp",
+#             "tasks": [
+#                 {
+#                     "ip": "127.0.1.1",
+#                     "port": 31261
+#                 }
+#             ]
+#         }
+#     ]
+# }
 
 # XXX - Should cache this
 @log.duration
@@ -32,3 +47,19 @@ def fetch():
             timeout=TIMEOUT).json()
     except requests.exceptions.ConnectionError:
         log.fatal("Could not get state.json")
+
+def get_task_data(task):
+    return {
+        "ip": task.get("statuses", [])[-1].get("container_status").get(
+            "network_infos")[0].get("ip_addresses")[0].get("ip_address"),
+        "port": int(task.get("resources").get("ports").split("-")[0][1:])
+    }
+
+def services():
+    tasks = [x for y in
+        [fwk.get("tasks") for fwk in fetch().get("frameworks")] for x in y]
+    return [{
+        "name": name,
+        "tasks": map(get_task_data, data)
+    } for name, data in itertools.groupby(tasks,
+        key=lambda x: x.get("name", None))]

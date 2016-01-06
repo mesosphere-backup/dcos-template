@@ -17,7 +17,7 @@
 import configargparse
 import logging
 
-from . import log, mesos, tmpl
+from . import log, tmpl
 
 
 def get_opts():
@@ -35,6 +35,5 @@ def main():
     logging.basicConfig(level=opts.log_level)
     # -----------
 
-    data = mesos.fetch()
     for tmpl in opts.template:
-        tmpl.render(data)
+        tmpl.render()

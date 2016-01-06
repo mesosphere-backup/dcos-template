@@ -17,7 +17,7 @@
 import argparse
 import jinja2
 
-from . import log
+from . import log, mesos
 
 class Template(object):
 
@@ -25,8 +25,10 @@ class Template(object):
         self.set_opts(val)
         self.get_template()
 
-    def render(self, data):
-        tmpl = jinja2.Template(self.source).render(data=data)
+    def render(self):
+        tmpl = jinja2.Template(self.source).render(data={
+            "services": mesos.services()
+        })
         log.debug(tmpl)
         with open(self.dest_path, "w") as fobj:
             fobj.write(tmpl)
